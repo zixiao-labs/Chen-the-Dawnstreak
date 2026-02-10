@@ -1,0 +1,23 @@
+{
+  "name": "chen-the-dawnstreak",
+  "version": "1.0.2",
+  "description": "赤刃明霄陈-全栈React框架但是不依赖Vercel(应该是全NPM明日方舟浓度最高的包了吧)",
+  "keywords": [
+    "react",
+    "framework"
+  ],
+  "license": "MIT",
+  "author": "amiya167",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@mdui/icons": "^1.0.3",
+    "mdui": "^2.1.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "^7.13.0"
+  }
+}
