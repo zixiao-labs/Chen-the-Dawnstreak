@@ -1,5 +1,9 @@
 ## Chen-the-Dawnstreak
 
+[![npm version](https://badge.fury.io/js/chen-the-dawnstreak.svg)](https://www.npmjs.com/package/chen-the-dawnstreak)
+[![React 19](https://img.shields.io/badge/React-19-blue)](https://react.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 赤刃明霄陈 — 全栈 React 框架，不依赖 Vercel。
 
 Typed React wrappers for all 46 [MDUI](https://www.mdui.org/) Web Components, plus routing and data-fetching hooks.
