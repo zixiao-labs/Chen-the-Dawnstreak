@@ -6,6 +6,10 @@
     "react",
     "framework"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zixiao-labs/Chen-the-Dawnstreak.git"
+  },
   "license": "MIT",
   "author": "amiya167",
   "type": "module",
