@@ -1,32 +1,17 @@
 {
   "name": "chen-the-dawnstreak",
-  "version": "2.0.3",
+  "version": "2.0.1",
   "description": "赤刃明霄陈-全栈React框架但是不依赖Vercel(应该是全NPM明日方舟浓度最高的包了吧)",
   "keywords": [
     "react",
-    "framework"
+    "framework",
+    "arknights"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zixiao-labs/Chen-the-Dawnstreak.git"
-  },
   "license": "MIT",
   "author": "amiya167",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
+  "type": "commonjs",
+  "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
