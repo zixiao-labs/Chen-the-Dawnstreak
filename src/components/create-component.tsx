@@ -16,6 +16,14 @@ export interface CommonProps {
   slot?: string;
   id?: string;
   hidden?: boolean;
+  // Standard DOM events — handled natively by React 19's custom element support
+  onClick?: (event: Event) => void;
+  onDoubleClick?: (event: Event) => void;
+  onKeyDown?: (event: Event) => void;
+  onKeyUp?: (event: Event) => void;
+  onMouseEnter?: (event: Event) => void;
+  onMouseLeave?: (event: Event) => void;
+  onContextMenu?: (event: Event) => void;
 }
 
 type EventMap = Record<string, string>;

@@ -137,7 +137,7 @@ function CreateUser() {
 - [x] Data fetching hooks (useFetch, useMutation)
 - [ ] SSR support
 - [ ] File-based routing
-- [ ] Server actions
+- [ ] Server actions(RSC or self code)
 - [ ] Build tooling (Vite plugin)
 - [ ] CLI scaffolding tool
 

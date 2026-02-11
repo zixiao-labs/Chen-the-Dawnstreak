@@ -424,7 +424,8 @@ export const LayoutItem = createComponent<LayoutItemProps>('mdui-layout-item');
 
 // ─── 19. LayoutMain ─────────────────────────────────────────────────────────
 
-export type LayoutMainProps = Record<string, never>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface LayoutMainProps {}
 
 export const LayoutMain = createComponent<LayoutMainProps>('mdui-layout-main');
 
@@ -439,7 +440,8 @@ export const LinearProgress = createComponent<LinearProgressProps>('mdui-linear-
 
 // ─── 21. List ───────────────────────────────────────────────────────────────
 
-export type ListProps = Record<string, never>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ListProps {}
 
 export const List = createComponent<ListProps>('mdui-list');
 
@@ -474,7 +476,8 @@ export const ListItem = createComponent<ListItemProps>('mdui-list-item', {
 
 // ─── 23. ListSubheader ──────────────────────────────────────────────────────
 
-export type ListSubheaderProps = Record<string, never>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ListSubheaderProps {}
 
 export const ListSubheader = createComponent<ListSubheaderProps>('mdui-list-subheader');
 
@@ -1062,6 +1065,7 @@ export const TopAppBar = createComponent<TopAppBarProps>('mdui-top-app-bar', {
 
 // ─── 46. TopAppBarTitle ─────────────────────────────────────────────────────
 
-export type TopAppBarTitleProps = Record<string, never>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface TopAppBarTitleProps {}
 
 export const TopAppBarTitle = createComponent<TopAppBarTitleProps>('mdui-top-app-bar-title');
