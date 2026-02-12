@@ -8,6 +8,25 @@
 
 Typed React wrappers for all 46 [MDUI](https://www.mdui.org/) Web Components, plus routing and data-fetching hooks.
 
+## Quick Start — CLI
+
+```bash
+npx chen-the-dawnstreak my-app
+# or
+npx chen my-app
+```
+
+交互式选择项目类型：
+
+| 类型 | 说明 |
+|------|------|
+| Web | Vite + React + MDUI |
+| Web + PWA | 额外生成 manifest.json、Service Worker |
+| Desktop (Electron) | 额外生成 Electron 主进程/预加载脚本 |
+| Desktop (Tauri) | 额外生成 src-tauri/ Rust 项目 |
+
+CLI **不会自动安装依赖**，创建完成后按提示手动执行 `npm install`。
+
 ## Installation
 
 ```bash
@@ -129,6 +148,43 @@ function CreateUser() {
 }
 ```
 
+## Vite Plugin
+
+配套 Vite 插件，自动注入 MDUI CSS 并支持 PWA。
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { chen } from 'chen-the-dawnstreak/vite-plugin';
+
+export default defineConfig({
+  plugins: [react(), chen()],
+});
+```
+
+### PWA 支持
+
+```ts
+chen({ pwa: true })
+// 或自定义配置
+chen({
+  pwa: {
+    name: 'My App',
+    shortName: 'App',
+    themeColor: '#6750a4',
+    backgroundColor: '#ffffff',
+    display: 'standalone',
+    icons: [
+      { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
+})
+```
+
+启用 PWA 后，构建时自动生成 `manifest.json` 和 `sw.js`，并在 HTML 中注入 manifest link、theme-color meta 和 Service Worker 注册脚本。
+
 ## Roadmap
 
 - [x] Typed React wrappers for all 46 MDUI components
@@ -138,8 +194,8 @@ function CreateUser() {
 - [ ] SSR support
 - [ ] File-based routing
 - [ ] Server actions(RSC or self code)
-- [ ] Build tooling (Vite plugin)
-- [ ] CLI scaffolding tool
+- [x] Build tooling (Vite plugin)
+- [x] CLI scaffolding tool (Web / PWA / Electron / Tauri)
 
 ## License
 
