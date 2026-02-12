@@ -1,6 +1,6 @@
 ## Chen-the-Dawnstreak
 
-[![npm version](https://badge.fury.io/js/chen-the-dawnstreak.svg)](https://www.npmjs.com/package/chen-the-dawnstreak)
+[![npm version](https://badge.fury.io/js/chen-the-dawnstreak.svg)](https://www.npmjs.com/package/chen-the-dawnstreak) 
 [![React 19](https://img.shields.io/badge/React-19-blue)](https://react.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
