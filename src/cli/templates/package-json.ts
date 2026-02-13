@@ -34,10 +34,13 @@ export function packageJson(projectName: string, type: ProjectType): string {
       break;
 
     case 'electron':
+      (base as Record<string, unknown>)['main'] = 'dist-electron/main.js';
       base.devDependencies['electron'] = '^35.0.0';
       base.devDependencies['electron-builder'] = '^26.0.0';
-      base.scripts['dev:electron'] = 'vite build && electron .';
-      base.scripts['build:electron'] = 'vite build && electron-builder';
+      base.devDependencies['esbuild'] = '^0.25.0';
+      base.scripts['build:electron-main'] = 'esbuild electron/main.ts electron/preload.ts --bundle --platform=node --outdir=dist-electron --format=esm --external:electron';
+      base.scripts['dev:electron'] = 'vite build && npm run build:electron-main && electron .';
+      base.scripts['build:electron'] = 'vite build && npm run build:electron-main && electron-builder';
       break;
 
     case 'tauri':

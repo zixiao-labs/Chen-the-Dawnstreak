@@ -4,7 +4,7 @@ import type { ProjectType } from './templates/package-json.js';
 import { indexHtml, mainTsx, appTsx, appCss, tsconfigJson, tsconfigAppJson, gitignore, viteEnvDts } from './templates/base.js';
 import { packageJson } from './templates/package-json.js';
 import { viteConfig } from './templates/vite-config.js';
-import { manifest, registerSw } from './templates/pwa.js';
+import { manifest } from './templates/pwa.js';
 import { electronMain, electronPreload } from './templates/electron.js';
 import { cargoToml, tauriConf, tauriMainRs, tauriBuildRs } from './templates/tauri.js';
 
@@ -54,7 +54,6 @@ export function scaffold(projectName: string, type: ProjectType): void {
     files.push(
       { filePath: 'public/manifest.json', content: manifest(projectName) },
       { filePath: 'public/icons/.gitkeep', content: '' },
-      { filePath: 'src/register-sw.ts', content: registerSw() },
     );
   }
 

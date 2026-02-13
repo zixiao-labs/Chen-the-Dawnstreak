@@ -19,7 +19,7 @@ serde_json = "1"
 export function tauriConf(projectName: string): string {
   return JSON.stringify(
     {
-      $schema: 'https://raw.githubusercontent.com/nickelpack/tauri/dev/crates/tauri-config-schema/schema.json',
+      $schema: 'https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json',
       productName: projectName,
       version: '0.0.0',
       identifier: `com.${projectName.replace(/[^a-zA-Z0-9]/g, '')}.app`,
