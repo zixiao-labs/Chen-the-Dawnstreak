@@ -60,6 +60,7 @@ type ButtonType = 'submit' | 'reset' | 'button';
 type FormEnctype = 'application/x-www-form-urlencoded' | 'multipart/form-data' | 'text/plain';
 type FormMethod = 'post' | 'get';
 type EventHandler = (event: Event) => void;
+const selfTarget = (e: Event, el: HTMLElement) => e.target === el;
 
 // ─── 1. Avatar ──────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ export interface ButtonProps {
 }
 
 export const Button = createComponent<ButtonProps>('mdui-button', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
   onInvalid: 'invalid',
@@ -160,6 +162,7 @@ export interface ButtonIconProps {
 }
 
 export const ButtonIcon = createComponent<ButtonIconProps>('mdui-button-icon', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
   onChange: 'change',
@@ -178,7 +181,9 @@ export interface CardProps {
   rel?: RelAttr;
 }
 
-export const Card = createComponent<CardProps>('mdui-card');
+export const Card = createComponent<CardProps>('mdui-card', {
+  onClick: 'click',
+});
 
 // ─── 7. Checkbox ────────────────────────────────────────────────────────────
 
@@ -248,6 +253,7 @@ export interface ChipProps {
 }
 
 export const Chip = createComponent<ChipProps>('mdui-chip', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
   onInvalid: 'invalid',
@@ -316,10 +322,10 @@ export interface DialogProps {
 }
 
 export const Dialog = createComponent<DialogProps>('mdui-dialog', {
-  onOpen: 'open',
-  onOpened: 'opened',
-  onClose: 'close',
-  onClosed: 'closed',
+  onOpen: { event: 'open', filter: selfTarget },
+  onOpened: { event: 'opened', filter: selfTarget },
+  onClose: { event: 'close', filter: selfTarget },
+  onClosed: { event: 'closed', filter: selfTarget },
   onOverlayClick: 'overlay-click',
 });
 
@@ -391,6 +397,7 @@ export interface FabProps {
 }
 
 export const Fab = createComponent<FabProps>('mdui-fab', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
   onInvalid: 'invalid',
@@ -470,6 +477,7 @@ export interface ListItemProps {
 }
 
 export const ListItem = createComponent<ListItemProps>('mdui-list-item', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
 });
@@ -574,6 +582,7 @@ export interface NavigationBarItemProps {
 export const NavigationBarItem = createComponent<NavigationBarItemProps>(
   'mdui-navigation-bar-item',
   {
+    onClick: 'click',
     onFocus: 'focus',
     onBlur: 'blur',
   },
@@ -745,6 +754,7 @@ export interface SegmentedButtonProps {
 }
 
 export const SegmentedButton = createComponent<SegmentedButtonProps>('mdui-segmented-button', {
+  onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',
   onInvalid: 'invalid',

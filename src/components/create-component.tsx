@@ -16,7 +16,8 @@ export interface CommonProps {
   slot?: string;
   id?: string;
   hidden?: boolean;
-  // Standard DOM events — handled natively by React 19's custom element support
+  // Standard DOM events — available on all components via CommonProps.
+  // For reliable handling, add these to the component's eventMap.
   onClick?: (event: Event) => void;
   onDoubleClick?: (event: Event) => void;
   onKeyDown?: (event: Event) => void;
@@ -26,7 +27,8 @@ export interface CommonProps {
   onContextMenu?: (event: Event) => void;
 }
 
-type EventMap = Record<string, string>;
+type EventMapEntry = string | { event: string; filter?: (e: Event, el: HTMLElement) => boolean };
+type EventMap = Record<string, EventMapEntry>;
 
 function mergeRefs<T>(...refs: (Ref<T> | undefined | null)[]): (el: T | null) => void {
   return (el: T | null) => {
@@ -45,7 +47,12 @@ export function createComponent<P extends object>(
   eventMap?: EventMap,
 ) {
   const eventEntries = eventMap ? Object.entries(eventMap) : [];
-  const eventPropNames = new Set(eventEntries.map(([propName]) => propName));
+  const normalizedEntries = eventEntries.map(([propName, entry]) => ({
+    propName,
+    domEvent: typeof entry === 'string' ? entry : entry.event,
+    filter: typeof entry === 'string' ? undefined : entry.filter,
+  }));
+  const eventPropNames = new Set(normalizedEntries.map(({ propName }) => propName));
 
   const Component = forwardRef<HTMLElement, P & CommonProps>(
     (props, forwardedRef) => {
@@ -63,31 +70,39 @@ export function createComponent<P extends object>(
           elementProps['class'] = value;
         } else if (key === 'children') {
           // handled separately via createElement third arg
+        } else if (/^on[A-Z]/.test(key) && typeof value === 'function') {
+          // Unmapped on* prop — do not pass to createElement
         } else {
           elementProps[key] = value;
         }
       }
 
+      const handlersRef = useRef(eventHandlers);
+      handlersRef.current = eventHandlers;
+
       useEffect(() => {
         const el = internalRef.current;
-        if (!el || eventEntries.length === 0) return;
+        if (!el || normalizedEntries.length === 0) return;
 
         const listeners: Array<[string, EventListener]> = [];
 
-        for (const [propName, domEvent] of eventEntries) {
-          const handler = eventHandlers[propName];
-          if (handler) {
-            el.addEventListener(domEvent, handler);
-            listeners.push([domEvent, handler]);
-          }
+        for (const { propName, domEvent, filter } of normalizedEntries) {
+          const listener: EventListener = (e: Event) => {
+            const fn = handlersRef.current[propName];
+            if (!fn) return;
+            if (filter && !filter(e, el)) return;
+            fn(e);
+          };
+          el.addEventListener(domEvent, listener);
+          listeners.push([domEvent, listener]);
         }
 
         return () => {
-          for (const [domEvent, handler] of listeners) {
-            el.removeEventListener(domEvent, handler);
+          for (const [domEvent, listener] of listeners) {
+            el.removeEventListener(domEvent, listener);
           }
         };
-      });
+      }, []);
 
       return createElement(
         tagName,
