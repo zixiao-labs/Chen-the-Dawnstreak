@@ -6,6 +6,8 @@
 
 赤刃明霄陈 — 全栈 React 框架，不依赖 Vercel。
 
+Star过200就在README里放赤刃明霄陈立绘
+
 Typed React wrappers for all 46 [MDUI](https://www.mdui.org/) Web Components, plus routing and data-fetching hooks.
 
 ## Quick Start — CLI
