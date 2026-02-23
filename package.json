@@ -28,14 +28,17 @@
     "./vite-plugin": {
       "types": "./dist/vite-plugin/index.d.ts",
       "import": "./dist/vite-plugin/index.js"
+    },
+    "./vite-plugin/client": {
+      "types": "./dist/vite-plugin/client.d.ts"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc && chmod +x dist/cli/index.js",
-    "prepublishOnly": "tsc && chmod +x dist/cli/index.js",
+    "build": "tsc && chmod +x dist/cli/index.js && cp src/vite-plugin/client.d.ts dist/vite-plugin/client.d.ts",
+    "prepublishOnly": "tsc && chmod +x dist/cli/index.js && cp src/vite-plugin/client.d.ts dist/vite-plugin/client.d.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

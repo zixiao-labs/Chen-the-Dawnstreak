@@ -165,6 +165,65 @@ export default defineConfig({
 });
 ```
 
+### 文件路由
+
+在 `src/pages/` 下按约定放置页面文件，插件自动生成路由，无需手写 `<Routes>/<Route>`。
+
+```ts
+chen({ routes: true })
+// 或自定义目录
+chen({ routes: { dir: 'src/pages' } })
+```
+
+在 `vite-env.d.ts` 中添加类型引用：
+
+```ts
+/// <reference types="chen-the-dawnstreak/vite-plugin/client" />
+```
+
+在应用入口使用：
+
+```tsx
+import { ChenRouter } from 'chen-the-dawnstreak';
+import { ChenRoutes } from 'virtual:chen-routes';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <ChenRouter>
+    <ChenRoutes />
+  </ChenRouter>
+);
+```
+
+**文件约定：**
+
+| 文件 | 路由 | 说明 |
+|------|------|------|
+| `pages/index.tsx` | `/` | 首页 |
+| `pages/about.tsx` | `/about` | 静态路由 |
+| `pages/blog/index.tsx` | `/blog` | 目录 index |
+| `pages/blog/[id].tsx` | `/blog/:id` | 动态参数 |
+| `pages/[...slug].tsx` | `*` | 通配 catch-all |
+| `pages/_layout.tsx` | — | 根布局，需含 `<Outlet />` |
+| `pages/blog/_layout.tsx` | — | `/blog` 嵌套布局 |
+| `pages/_404.tsx` | `*` | 自定义 404 页 |
+
+`_layout.tsx` 示例：
+
+```tsx
+import { Outlet } from 'chen-the-dawnstreak';
+
+export default function Layout() {
+  return (
+    <>
+      <nav>...</nav>
+      <Outlet />
+    </>
+  );
+}
+```
+
+页面文件自动进行代码分割（`React.lazy`），开发时新增/删除文件触发自动刷新。
+
 ### PWA 支持
 
 ```ts
@@ -194,8 +253,8 @@ chen({
 - [x] Router (react-router v7 wrapper)
 - [x] Data fetching hooks (useFetch, useMutation)
 - [ ] SSR support
-- [ ] File-based routing
-- [ ] Server actions(RSC or self code)
+- [x] File-based routing
+- [ ] Server actions(RSC)
 - [x] Build tooling (Vite plugin)
 - [x] CLI scaffolding tool (Web / PWA / Electron / Tauri)
 
