@@ -254,7 +254,7 @@ chen({
 - [x] Data fetching hooks (useFetch, useMutation)
 - [ ] SSR support
 - [x] File-based routing
-- [ ] Server actions(RSC)
+- [x] Server actions(RSC)
 - [x] Build tooling (Vite plugin)
 - [x] CLI scaffolding tool (Web / PWA / Electron / Tauri)
 
