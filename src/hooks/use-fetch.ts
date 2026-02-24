@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface UseFetchOptions extends Omit<RequestInit, 'signal'> {

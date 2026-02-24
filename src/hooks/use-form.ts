@@ -1,3 +1,4 @@
+"use client";
 import { useState, useCallback, useRef, type ChangeEvent, type FormEvent } from 'react';
 
 export type ValidationRule<T> = {
