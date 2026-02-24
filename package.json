@@ -1,6 +1,6 @@
 {
   "name": "chen-the-dawnstreak",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "赤刃明霄陈-全栈React框架但是不依赖Vercel(应该是全NPM明日方舟浓度最高的包了吧)",
   "keywords": [
     "react",
