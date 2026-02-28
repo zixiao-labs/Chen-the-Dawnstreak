@@ -1,0 +1,128 @@
+# Chen-the-Dawnstreak
+
+> Typed React 19+ wrappers for all 46 MDUI Web Components, plus routing, data-fetching hooks, state management, SSR, a Vite plugin, and a CLI scaffolding tool.
+
+## Installation
+
+```bash
+npm install chen-the-dawnstreak
+```
+
+## Entry Points
+
+| Import path | Description |
+|---|---|
+| `chen-the-dawnstreak` | Components, router, hooks |
+| `chen-the-dawnstreak/vite-plugin` | Vite plugin (PWA, file routing, SSR) |
+| `chen-the-dawnstreak/ssr` | SSR utilities |
+| `npx chen` / `npx chen-the-dawnstreak` | CLI scaffolding |
+
+## Components (46)
+
+All components are created via `createComponent<Props>(tagName, eventMap?)`. Event handlers (onFocus, onChange, etc.) are attached via `addEventListener` on a ref, not passed as DOM attributes.
+
+Avatar, Badge, BottomAppBar, Button, ButtonIcon, Card, Checkbox, Chip, CircularProgress, Collapse, CollapseItem, Dialog, Divider, Dropdown, Fab, Icon, Layout, LayoutItem, LayoutMain, LinearProgress, List, ListItem, ListSubheader, Menu, MenuItem, NavigationBar, NavigationBarItem, NavigationDrawer, NavigationRail, NavigationRailItem, Radio, RadioGroup, RangeSlider, SegmentedButton, SegmentedButtonGroup, Select, Slider, Snackbar, Switch, Tab, TabPanel, Tabs, TextField, Tooltip, TopAppBar, TopAppBarTitle.
+
+### Common Props (all components)
+
+className, style, children, slot, id, hidden, onClick, onDoubleClick, onKeyDown, onKeyUp, onMouseEnter, onMouseLeave, onContextMenu.
+
+### Usage Pattern
+
+```tsx
+import { Button, TextField } from 'chen-the-dawnstreak';
+<Button variant="filled" onFocus={(e) => {}}>Click</Button>
+<TextField variant="outlined" label="Email" onInput={(e) => {}} />
+```
+
+## Router
+
+Thin re-export of react-router v7. `ChenRouter` = `BrowserRouter` with MDUI CSS injection.
+
+Exports: ChenRouter, Route, Routes, Link, NavLink, Navigate, Outlet, useNavigate, useParams, useSearchParams, useLocation, useMatch.
+
+## Hooks
+
+### useFetch<T>(url, options?)
+
+GET with AbortController cleanup. Options: `enabled`, `headers`, `credentials`.
+Returns: `{ data, loading, error, refetch }`.
+
+### useMutation<TData, TVariables>(url, options?)
+
+POST (configurable method). Auto-serializes body as JSON.
+Options: `method`, `headers`, `credentials`, `onSuccess`, `onError`.
+Returns: `{ mutate, data, loading, error, reset }`.
+
+### useForm<T>(options)
+
+Form management with validation. Options: `defaultValues`, `validationRules`, `onSubmit`.
+Returns: `{ values, errors, touched, isValid, isSubmitting, register, handleSubmit, setValue, setValues, reset, validate, validateField }`.
+Validation rules: `required`, `min`, `max`, `minLength`, `maxLength`, `pattern`, `validate` (async), `custom`.
+
+### useController<T>(form, { name, rules? })
+
+For controlled components. Returns `{ field: { name, value, onChange, onBlur, ref }, fieldState: { error, isTouched } }`.
+
+### createStore<T>({ name?, initialState })
+
+Context-based scoped store. Returns: `{ StoreProvider, useStore, useStoreDispatch, useStoreSelector }`.
+
+### createSimpleStore<T>(initialState)
+
+Global singleton store, no Provider needed. Returns: `{ getState, setState, subscribe, useStore, useDispatch }`.
+
+### useServerAction<TState, TInput>(action, initialState)
+
+Wraps React 19 `useActionState` for server actions. Returns: `{ state, execute, isPending }`.
+
+### Re-exports
+
+useFormStatus (from react-dom), useOptimistic (from react).
+
+## Vite Plugin
+
+```ts
+import { chen } from 'chen-the-dawnstreak/vite-plugin';
+chen({ pwa?: boolean | ChenPWAOptions, routes?: boolean | ChenRoutesOptions, ssr?: boolean })
+```
+
+- `chen:core` — Injects MDUI CSS, configures optimizeDeps
+- `chen:pwa` — manifest.json, SW registration, theme-color meta
+- `chen:routes` — File-based routing from src/pages/. Conventions: index.tsx → /, [id].tsx → :id, [...slug].tsx → *, _layout.tsx → layout wrapper, _404.tsx → catch-all
+- `chen:ssr` — Stubs CSS imports during SSR builds, configures ssr.noExternal
+
+## SSR
+
+```ts
+import { renderToStream, renderToHTML, createHTMLShell, ChenSSRRouter, getMduiCSS, isBrowser, isServer } from 'chen-the-dawnstreak/ssr';
+```
+
+- `renderToStream(element, writable, options)` — Streams HTML via renderToPipeableStream
+- `renderToHTML(element, options)` — Returns complete HTML string
+- `createHTMLShell(options)` — Returns `{ beforeContent, afterContent }`
+- `ChenSSRRouter` — StaticRouter re-export for SSR routing
+- `getMduiCSS()` — Reads MDUI CSS from disk for inlining
+- `isBrowser` / `isServer` — Environment detection
+
+ChenSSROptions: `{ title?, lang?, headTags?, mduiCSSHref?, rootId?, clientEntry }`.
+
+### SSR Model
+
+MDUI custom elements can't render shadow DOM on the server. During SSR, `createElement('mdui-button')` outputs `<mdui-button>` as plain HTML. Custom element registration is guarded behind `typeof window !== 'undefined'`. On hydration, the browser registers elements and upgrades them.
+
+## CLI
+
+```bash
+npx chen my-app
+```
+
+Interactive scaffold for: Web, Web+PWA, Desktop (Electron), Desktop (Tauri). Generates Vite + React + MDUI project with TypeScript.
+
+## Architecture Notes
+
+- All components use `"use client"` directives for RSC compatibility
+- Event handlers are NOT passed as props to the DOM. They are intercepted and attached via `addEventListener` on the ref
+- `className` is translated to `class` for web components
+- Refs are merged via `mergeRefs` utility
+- MDUI element registration is browser-only (guarded dynamic import)

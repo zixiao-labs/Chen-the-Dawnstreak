@@ -1,53 +1,10 @@
 import { createComponent } from './create-component.js';
 export { createComponent, type CommonProps } from './create-component.js';
 
-// ─── Side-effect imports: register all MDUI custom elements ─────────────────
-import 'mdui/components/avatar.js';
-import 'mdui/components/badge.js';
-import 'mdui/components/bottom-app-bar.js';
-import 'mdui/components/button.js';
-import 'mdui/components/button-icon.js';
-import 'mdui/components/card.js';
-import 'mdui/components/checkbox.js';
-import 'mdui/components/chip.js';
-import 'mdui/components/circular-progress.js';
-import 'mdui/components/collapse/collapse.js';
-import 'mdui/components/collapse/collapse-item.js';
-import 'mdui/components/dialog.js';
-import 'mdui/components/divider.js';
-import 'mdui/components/dropdown.js';
-import 'mdui/components/fab.js';
-import 'mdui/components/icon.js';
-import 'mdui/components/layout/layout.js';
-import 'mdui/components/layout/layout-item.js';
-import 'mdui/components/layout/layout-main.js';
-import 'mdui/components/linear-progress.js';
-import 'mdui/components/list/list.js';
-import 'mdui/components/list/list-item.js';
-import 'mdui/components/list/list-subheader.js';
-import 'mdui/components/menu/menu.js';
-import 'mdui/components/menu/menu-item.js';
-import 'mdui/components/navigation-bar/navigation-bar.js';
-import 'mdui/components/navigation-bar/navigation-bar-item.js';
-import 'mdui/components/navigation-drawer.js';
-import 'mdui/components/navigation-rail/navigation-rail.js';
-import 'mdui/components/navigation-rail/navigation-rail-item.js';
-import 'mdui/components/radio/radio.js';
-import 'mdui/components/radio/radio-group.js';
-import 'mdui/components/range-slider.js';
-import 'mdui/components/segmented-button/segmented-button.js';
-import 'mdui/components/segmented-button/segmented-button-group.js';
-import 'mdui/components/select.js';
-import 'mdui/components/slider.js';
-import 'mdui/components/snackbar.js';
-import 'mdui/components/switch.js';
-import 'mdui/components/tabs/tab.js';
-import 'mdui/components/tabs/tab-panel.js';
-import 'mdui/components/tabs/tabs.js';
-import 'mdui/components/text-field.js';
-import 'mdui/components/tooltip.js';
-import 'mdui/components/top-app-bar/top-app-bar.js';
-import 'mdui/components/top-app-bar/top-app-bar-title.js';
+// ─── Side-effect imports: register all MDUI custom elements (browser-only) ──
+if (typeof window !== 'undefined') {
+  import('./register.js');
+}
 
 // ─── Shared types ───────────────────────────────────────────────────────────
 

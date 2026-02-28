@@ -1,5 +1,8 @@
 "use client";
-import 'mdui/mdui.css';
+if (typeof document !== 'undefined') {
+  // @ts-ignore CSS module import - resolved by bundler at runtime
+  import('mdui/mdui.css');
+}
 
 export {
   BrowserRouter as ChenRouter,

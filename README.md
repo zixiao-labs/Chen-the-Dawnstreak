@@ -150,9 +150,200 @@ function CreateUser() {
 }
 ```
 
+## Forms
+
+### useForm
+
+Lightweight form management hook with validation, similar to React Hook Form.
+
+```tsx
+import { useForm, TextField, Button } from 'chen-the-dawnstreak';
+
+function LoginForm() {
+  const { register, handleSubmit, errors, isSubmitting } = useForm({
+    defaultValues: { email: '', password: '' },
+    validationRules: {
+      email: { required: 'Email is required', pattern: { value: /^\S+@\S+$/, message: 'Invalid email' } },
+      password: { required: true, minLength: { value: 8, message: 'Min 8 characters' } },
+    },
+    onSubmit: async (values) => {
+      await fetch('/api/login', { method: 'POST', body: JSON.stringify(values) });
+    },
+  });
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <TextField label="Email" {...register('email')} />
+      {errors.email && <p>{errors.email}</p>}
+      <TextField label="Password" type="password" {...register('password')} />
+      {errors.password && <p>{errors.password}</p>}
+      <Button type="submit" loading={isSubmitting}>Login</Button>
+    </form>
+  );
+}
+```
+
+Returns: `{ values, errors, touched, isValid, isSubmitting, register, handleSubmit, setValue, setValues, reset, validate, validateField }`.
+
+Validation rules: `required`, `min`, `max`, `minLength`, `maxLength`, `pattern`, `validate` (async), `custom`.
+
+### useController
+
+For controlled components that don't use standard `onChange`:
+
+```tsx
+import { useForm, useController, Select } from 'chen-the-dawnstreak';
+
+function MyForm() {
+  const form = useForm({ defaultValues: { role: 'user' } });
+  const { field, fieldState } = useController(form, { name: 'role' });
+
+  return <Select label="Role" value={field.value} onChange={field.onChange} />;
+}
+```
+
+## State Management
+
+### createStore (Context-based)
+
+Creates a scoped store with React Context. Each `StoreProvider` holds its own state.
+
+```tsx
+import { createStore } from 'chen-the-dawnstreak';
+
+const { StoreProvider, useStore, useStoreDispatch, useStoreSelector } = createStore({
+  name: 'counter',
+  initialState: { count: 0, label: 'Counter' },
+});
+
+function Counter() {
+  const count = useStoreSelector((s) => s.count);
+  const dispatch = useStoreDispatch();
+  return <Button onClick={() => dispatch((s) => ({ count: s.count + 1 }))}>Count: {count}</Button>;
+}
+
+function App() {
+  return (
+    <StoreProvider>
+      <Counter />
+    </StoreProvider>
+  );
+}
+```
+
+### createSimpleStore (Global singleton)
+
+Module-level store, no Provider needed. Good for app-wide state like themes or auth.
+
+```tsx
+import { createSimpleStore } from 'chen-the-dawnstreak';
+
+const themeStore = createSimpleStore({ dark: false });
+
+function ThemeToggle() {
+  const { dark } = themeStore.useStore();
+  const dispatch = themeStore.useDispatch();
+  return <Switch checked={dark} onChange={() => dispatch({ dark: !dark })} />;
+}
+```
+
+## Server Actions / RSC
+
+All components have `"use client"` directives and work with React Server Components.
+
+### useServerAction
+
+Wraps React 19's `useActionState` for server actions:
+
+```tsx
+import { useServerAction } from 'chen-the-dawnstreak';
+
+// Server action (in a "use server" file)
+async function createUser(prev: { error?: string }, formData: FormData) {
+  "use server";
+  const name = formData.get('name') as string;
+  // ... create user
+  return { error: undefined };
+}
+
+// Client component
+function CreateUserForm() {
+  const { state, execute, isPending } = useServerAction(createUser, { error: undefined });
+
+  return (
+    <form action={execute}>
+      <TextField name="name" label="Name" />
+      <Button type="submit" loading={isPending}>Create</Button>
+      {state.error && <p>{state.error}</p>}
+    </form>
+  );
+}
+```
+
+Re-exports: `useFormStatus` (from `react-dom`), `useOptimistic` (from `react`).
+
+## SSR
+
+Chen supports server-side rendering. MDUI custom elements output as plain HTML tags during SSR and upgrade on the client when the browser registers them.
+
+### Setup
+
+```ts
+// vite.config.ts
+import { chen } from 'chen-the-dawnstreak/vite-plugin';
+
+export default defineConfig({
+  plugins: [react(), chen({ ssr: true })],
+});
+```
+
+The `ssr: true` option stubs CSS imports during SSR builds and configures `ssr.noExternal`.
+
+### Server-side rendering
+
+```tsx
+import { renderToStream, renderToHTML, createHTMLShell, ChenSSRRouter, getMduiCSS } from 'chen-the-dawnstreak/ssr';
+import express from 'express';
+
+const app = express();
+app.use(express.static('dist/client'));
+
+app.get('*', (req, res) => {
+  const element = (
+    <ChenSSRRouter location={req.url}>
+      <App />
+    </ChenSSRRouter>
+  );
+
+  // Option 1: Streaming (recommended)
+  renderToStream(element, res, {
+    clientEntry: '/assets/main.js',
+    title: 'My App',
+    mduiCSSHref: '/assets/mdui.css',
+  });
+
+  // Option 2: String rendering
+  // const html = renderToHTML(element, { clientEntry: '/assets/main.js', title: 'My App' });
+  // res.send(html);
+});
+```
+
+### API
+
+- `renderToStream(element, writable, options)` — streams HTML with React's `renderToPipeableStream`
+- `renderToHTML(element, options)` — returns complete HTML string
+- `createHTMLShell(options)` — returns `{ beforeContent, afterContent }` for custom streaming
+- `ChenSSRRouter` — re-export of `StaticRouter` from react-router
+- `getMduiCSS()` — reads MDUI CSS from disk for inlining
+- `isBrowser` / `isServer` — environment detection constants
+
+### How it works
+
+During SSR, `createElement('mdui-button', ...)` outputs `<mdui-button>` as a plain HTML tag. The custom element registration (`import 'mdui/components/button.js'`) is guarded behind `typeof window !== 'undefined'` and only runs in the browser. On hydration, the client bundle registers all MDUI custom elements and the browser upgrades them with shadow DOM and interactivity.
+
 ## Vite Plugin
 
-配套 Vite 插件，自动注入 MDUI CSS 并支持 PWA。
+Includes a Vite plugin, automatically injecting MDUI CSS and supporting PWA.
 
 ```ts
 // vite.config.ts
@@ -165,23 +356,23 @@ export default defineConfig({
 });
 ```
 
-### 文件路由
+### File Routing
 
-在 `src/pages/` 下按约定放置页面文件，插件自动生成路由，无需手写 `<Routes>/<Route>`。
+Place page files under `src/pages/` according to convention. The plugin automatically generates routes, eliminating the need to manually write `<Routes>/<Route>`.
 
 ```ts
 chen({ routes: true })
-// 或自定义目录
+// Or custom directory
 chen({ routes: { dir: 'src/pages' } })
 ```
 
-在 `vite-env.d.ts` 中添加类型引用：
+Add type references in `vite-env.d.ts`:
 
 ```ts
 /// <reference types="chen-the-dawnstreak/vite-plugin/client" />
 ```
 
-在应用入口使用：
+Use in the application entry point:
 
 ```tsx
 import { ChenRouter } from 'chen-the-dawnstreak';
@@ -194,20 +385,20 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 ```
 
-**文件约定：**
+**File Conventions:**
 
-| 文件 | 路由 | 说明 |
+| File | Route | Description |
 |------|------|------|
-| `pages/index.tsx` | `/` | 首页 |
-| `pages/about.tsx` | `/about` | 静态路由 |
-| `pages/blog/index.tsx` | `/blog` | 目录 index |
-| `pages/blog/[id].tsx` | `/blog/:id` | 动态参数 |
-| `pages/[...slug].tsx` | `*` | 通配 catch-all |
-| `pages/_layout.tsx` | — | 根布局，需含 `<Outlet />` |
-| `pages/blog/_layout.tsx` | — | `/blog` 嵌套布局 |
-| `pages/_404.tsx` | `*` | 自定义 404 页 |
+| `pages/index.tsx` | `/` | Homepage |
+| `pages/about.tsx` | `/about` | Static Routing |
+| `pages/blog/index.tsx` | `/blog` | Index |
+| `pages/blog/[id].tsx` | `/blog/:id` | Dynamic Parameters |
+| `pages/[...slug].tsx` | `*` | Wildcard catch-all |
+| `pages/_layout.tsx` | — | Root Layout, must contain `<Outlet />` |
+| `pages/blog/_layout.tsx` | — | `/blog` Nested Layout |
+| `pages/_404.tsx` | `*` | Custom 404 Page |
 
-`_layout.tsx` 示例：
+`_layout.tsx` Example:
 
 ```tsx
 import { Outlet } from 'chen-the-dawnstreak';
@@ -222,13 +413,13 @@ export default function Layout() {
 }
 ```
 
-页面文件自动进行代码分割（`React.lazy`），开发时新增/删除文件触发自动刷新。
+Page files are automatically split using `React.lazy`. Adding/deleting files during development triggers an automatic refresh.
 
-### PWA 支持
+### PWA Support
 
 ```ts
 chen({ pwa: true })
-// 或自定义配置
+// Or custom configuration
 chen({
   pwa: {
     name: 'My App',
@@ -244,7 +435,7 @@ chen({
 })
 ```
 
-启用 PWA 后，构建时自动生成 `manifest.json` 和 `sw.js`，并在 HTML 中注入 manifest link、theme-color meta 和 Service Worker 注册脚本。
+After enabling PWA, `manifest.json` and `sw.js` are automatically generated during the build process, and the manifest link, theme-color meta, and Service Worker registration scripts are injected into the HTML.
 
 ## Roadmap
 
@@ -252,7 +443,7 @@ chen({
 - [x] Event handling via ref + addEventListener
 - [x] Router (react-router v7 wrapper)
 - [x] Data fetching hooks (useFetch, useMutation)
-- [ ] SSR support
+- [x] SSR support
 - [x] File-based routing
 - [x] Server actions(RSC)
 - [x] Build tooling (Vite plugin)

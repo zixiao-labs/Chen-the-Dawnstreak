@@ -31,6 +31,10 @@
     },
     "./vite-plugin/client": {
       "types": "./dist/vite-plugin/client.d.ts"
+    },
+    "./ssr": {
+      "types": "./dist/ssr/index.d.ts",
+      "import": "./dist/ssr/index.js"
     }
   },
   "files": [

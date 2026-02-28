@@ -27,6 +27,8 @@ export interface ChenPluginOptions {
   pwa?: boolean | ChenPWAOptions;
   /** Enable file-based routing from src/pages/. Pass true for defaults. */
   routes?: boolean | ChenRoutesOptions;
+  /** Enable SSR support. Stubs CSS imports and configures ssr.noExternal. */
+  ssr?: boolean;
 }
 
 // ─── File-based routing ───────────────────────────────────────────────────────
@@ -396,6 +398,36 @@ self.addEventListener('activate', (event) => {
   };
 }
 
+// ─── SSR plugin ───────────────────────────────────────────────────────────────
+
+function chenSSR(): Plugin {
+  return {
+    name: 'chen:ssr',
+
+    config(_, { isSsrBuild }) {
+      if (!isSsrBuild) return;
+      return {
+        ssr: {
+          noExternal: ['chen-the-dawnstreak'],
+        },
+      };
+    },
+
+    resolveId(id, _importer, options) {
+      if (!options?.ssr) return;
+      if (id === 'mdui/mdui.css' || /\.css$/.test(id)) {
+        return `\0chen-ssr-stub:${id}`;
+      }
+    },
+
+    load(id) {
+      if (id.startsWith('\0chen-ssr-stub:')) {
+        return 'export default ""';
+      }
+    },
+  };
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -433,6 +465,10 @@ export function chen(options?: ChenPluginOptions): Plugin[] {
     const routesOptions: ChenRoutesOptions =
       typeof options.routes === 'boolean' ? {} : options.routes;
     plugins.push(chenRoutes(routesOptions));
+  }
+
+  if (options?.ssr) {
+    plugins.push(chenSSR());
   }
 
   return plugins;
