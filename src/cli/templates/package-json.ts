@@ -14,7 +14,7 @@ export function packageJson(projectName: string, type: ProjectType): string {
   // Common deps
   base.dependencies['react'] = '^19.0.0';
   base.dependencies['react-dom'] = '^19.0.0';
-  base.dependencies['chen-the-dawnstreak'] = '^2.0.0';
+  base.dependencies['chen-the-dawnstreak'] = '^4.0.0';
 
   // Common devDeps
   base.devDependencies['vite'] = '^6.0.0';
