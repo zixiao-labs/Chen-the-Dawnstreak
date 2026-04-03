@@ -16,7 +16,7 @@ export interface ChenSSROptions {
   title?: string;
   lang?: string;
   headTags?: string[];
-  mduiCSSHref?: string;
+  cssHref?: string;
   rootId?: string;
   clientEntry: string;
 }
@@ -40,13 +40,13 @@ export function createHTMLShell(options: ChenSSROptions): HTMLShell {
     title = '',
     lang = 'en',
     headTags = [],
-    mduiCSSHref,
+    cssHref,
     rootId = 'root',
     clientEntry,
   } = options;
 
-  const cssTag = mduiCSSHref
-    ? `<link rel="stylesheet" href="${mduiCSSHref}">`
+  const cssTag = cssHref
+    ? `<link rel="stylesheet" href="${cssHref}">`
     : '';
 
   const beforeContent = `<!DOCTYPE html>
@@ -109,12 +109,3 @@ export function renderToHTML(
   return shell.beforeContent + content + shell.afterContent;
 }
 
-// ─── getMduiCSS ─────────────────────────────────────────────────────────────
-
-export function getMduiCSS(): string {
-  const { createRequire } = require('module') as typeof import('module');
-  const req = createRequire(import.meta.url);
-  const cssPath = req.resolve('mdui/mdui.css');
-  const fs = require('fs') as typeof import('fs');
-  return fs.readFileSync(cssPath, 'utf-8');
-}

@@ -28,16 +28,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 }
 
 export function appTsx(): string {
-  return `import { ChenRouter, Routes, Route, Card, Button } from 'chen-the-dawnstreak';
+  return `import { ChenRouter, Routes, Route } from 'chen-the-dawnstreak';
 import './App.css';
 
 function Home() {
   return (
-    <Card style={{ padding: '2rem', maxWidth: 600, margin: '2rem auto' }}>
+    <div style={{ padding: '2rem', maxWidth: 600, margin: '2rem auto' }}>
       <h1>欢迎使用赤刃明霄陈</h1>
-      <p>基于 MDUI 和 React 的全栈框架</p>
-      <Button variant="filled">开始使用</Button>
-    </Card>
+      <p>轻量级 React 元框架</p>
+    </div>
   );
 }
 

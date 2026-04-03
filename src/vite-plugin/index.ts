@@ -268,20 +268,9 @@ function chenCore(): Plugin {
     config() {
       return {
         optimizeDeps: {
-          include: ['mdui', 'chen-the-dawnstreak'],
+          include: ['chen-the-dawnstreak'],
         },
       };
-    },
-
-    transformIndexHtml() {
-      const tags: HtmlTagDescriptor[] = [
-        {
-          tag: 'style',
-          children: `@import 'mdui/mdui.css';`,
-          injectTo: 'head',
-        },
-      ];
-      return tags;
     },
   };
 }
@@ -415,7 +404,7 @@ function chenSSR(): Plugin {
 
     resolveId(id, _importer, options) {
       if (!options?.ssr) return;
-      if (id === 'mdui/mdui.css' || /\.css$/.test(id)) {
+      if (/\.css$/.test(id)) {
         return `\0chen-ssr-stub:${id}`;
       }
     },
@@ -431,7 +420,7 @@ function chenSSR(): Plugin {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
- * Chen Vite plugin - MDUI integration with optional PWA and file-based routing support.
+ * Chen Vite plugin - React metaframework with optional PWA and file-based routing support.
  *
  * @example
  * ```ts
