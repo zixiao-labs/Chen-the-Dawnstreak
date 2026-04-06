@@ -150,3 +150,8 @@ export function viteEnvDts(): string {
   return `/// <reference types="vite/client" />
 `;
 }
+
+export function nastiEnvDts(): string {
+  return `/// <reference types="nasti/client" />
+`;
+}

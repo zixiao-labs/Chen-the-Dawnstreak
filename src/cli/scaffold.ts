@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import type { ProjectType } from './templates/package-json.js';
-import { indexHtml, mainTsx, appTsx, appCss, tsconfigJson, tsconfigAppJson, gitignore, viteEnvDts } from './templates/base.js';
+import type { ProjectType, BundlerType } from './templates/package-json.js';
+import { indexHtml, mainTsx, appTsx, appCss, tsconfigJson, tsconfigAppJson, gitignore, viteEnvDts, nastiEnvDts } from './templates/base.js';
 import { packageJson } from './templates/package-json.js';
 import { viteConfig } from './templates/vite-config.js';
+import { nastiConfig } from './templates/nasti-config.js';
 import { manifest } from './templates/pwa.js';
 import { electronMain, electronPreload } from './templates/electron.js';
 import { cargoToml, tauriConf, tauriMainRs, tauriBuildRs } from './templates/tauri.js';
@@ -22,7 +23,7 @@ function writeFiles(projectDir: string, files: FileEntry[]): void {
   }
 }
 
-export function scaffold(projectName: string, type: ProjectType): void {
+export function scaffold(projectName: string, type: ProjectType, bundler: BundlerType = 'vite'): void {
   const projectDir = path.resolve(process.cwd(), projectName);
 
   if (fs.existsSync(projectDir)) {
@@ -35,6 +36,10 @@ export function scaffold(projectName: string, type: ProjectType): void {
 
   fs.mkdirSync(projectDir, { recursive: true });
 
+  // Electron and Tauri always use Vite
+  const effectiveBundler: BundlerType = (type === 'electron' || type === 'tauri') ? 'vite' : bundler;
+  const useNasti = effectiveBundler === 'nasti';
+
   // Base files for all project types
   const files: FileEntry[] = [
     { filePath: 'index.html', content: indexHtml(projectName) },
@@ -44,9 +49,9 @@ export function scaffold(projectName: string, type: ProjectType): void {
     { filePath: 'tsconfig.json', content: tsconfigJson() },
     { filePath: 'tsconfig.app.json', content: tsconfigAppJson() },
     { filePath: '.gitignore', content: gitignore() },
-    { filePath: 'src/vite-env.d.ts', content: viteEnvDts() },
-    { filePath: 'package.json', content: packageJson(projectName, type) },
-    { filePath: 'vite.config.ts', content: viteConfig(type) },
+    { filePath: useNasti ? 'src/nasti-env.d.ts' : 'src/vite-env.d.ts', content: useNasti ? nastiEnvDts() : viteEnvDts() },
+    { filePath: 'package.json', content: packageJson(projectName, type, effectiveBundler) },
+    { filePath: useNasti ? 'nasti.config.ts' : 'vite.config.ts', content: useNasti ? nastiConfig(type) : viteConfig(type) },
   ];
 
   // PWA-specific files
@@ -79,6 +84,9 @@ export function scaffold(projectName: string, type: ProjectType): void {
   writeFiles(projectDir, files);
 
   console.log(`\n✔ 项目已创建于 ./${projectName}\n`);
+  if (useNasti) {
+    console.log(`  打包器: Nasti (Rolldown + OXC)`);
+  }
   console.log('下一步:');
   console.log(`  cd ${projectName}`);
   console.log('  npm install');

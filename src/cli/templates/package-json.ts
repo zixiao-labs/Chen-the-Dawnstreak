@@ -1,6 +1,7 @@
 export type ProjectType = 'web' | 'pwa' | 'electron' | 'tauri';
+export type BundlerType = 'vite' | 'nasti';
 
-export function packageJson(projectName: string, type: ProjectType): string {
+export function packageJson(projectName: string, type: ProjectType, bundler: BundlerType = 'vite'): string {
   const base = {
     name: projectName,
     private: true,
@@ -16,17 +17,25 @@ export function packageJson(projectName: string, type: ProjectType): string {
   base.dependencies['react-dom'] = '^19.0.0';
   base.dependencies['chen-the-dawnstreak'] = '^4.0.0';
 
-  // Common devDeps
-  base.devDependencies['vite'] = '^6.0.0';
-  base.devDependencies['@vitejs/plugin-react'] = '^4.0.0';
+  // Bundler-specific devDeps and scripts (electron/tauri always use Vite)
+  const effectiveBundler: BundlerType = (type === 'electron' || type === 'tauri') ? 'vite' : bundler;
+
+  if (effectiveBundler === 'nasti') {
+    base.devDependencies['nasti'] = '^0.1.0';
+    base.scripts['dev'] = 'nasti dev';
+    base.scripts['build'] = 'tsc -b && nasti build';
+    base.scripts['preview'] = 'nasti preview';
+  } else {
+    base.devDependencies['vite'] = '^6.0.0';
+    base.devDependencies['@vitejs/plugin-react'] = '^4.0.0';
+    base.scripts['dev'] = 'vite';
+    base.scripts['build'] = 'tsc -b && vite build';
+    base.scripts['preview'] = 'vite preview';
+  }
+
   base.devDependencies['typescript'] = '^5.6.0';
   base.devDependencies['@types/react'] = '^19.0.0';
   base.devDependencies['@types/react-dom'] = '^19.0.0';
-
-  // Common scripts
-  base.scripts['dev'] = 'vite';
-  base.scripts['build'] = 'tsc -b && vite build';
-  base.scripts['preview'] = 'vite preview';
 
   switch (type) {
     case 'pwa':
