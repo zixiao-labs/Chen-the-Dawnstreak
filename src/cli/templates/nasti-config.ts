@@ -1,7 +1,7 @@
 import type { ProjectType } from './package-json.js';
 
 export function nastiConfig(_type: ProjectType): string {
-  return `import { defineConfig } from 'nasti';
+  return `import { defineConfig } from '@nasti-toolchain/nasti';
 
 export default defineConfig({
   framework: 'react',

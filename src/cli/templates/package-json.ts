@@ -21,7 +21,7 @@ export function packageJson(projectName: string, type: ProjectType, bundler: Bun
   const effectiveBundler: BundlerType = (type === 'electron' || type === 'tauri') ? 'vite' : bundler;
 
   if (effectiveBundler === 'nasti') {
-    base.devDependencies['nasti'] = '^0.1.0';
+    base.devDependencies['@nasti-toolchain/nasti'] = '>=1.0.0';
     base.scripts['dev'] = 'nasti dev';
     base.scripts['build'] = 'tsc -b && nasti build';
     base.scripts['preview'] = 'nasti preview';
