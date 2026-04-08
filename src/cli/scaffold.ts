@@ -8,6 +8,7 @@ import { nastiConfig } from './templates/nasti-config.js';
 import { manifest } from './templates/pwa.js';
 import { electronMain, electronPreload } from './templates/electron.js';
 import { cargoToml, tauriConf, tauriMainRs, tauriBuildRs } from './templates/tauri.js';
+import { t } from './i18n.js';
 
 interface FileEntry {
   filePath: string;
@@ -25,11 +26,12 @@ function writeFiles(projectDir: string, files: FileEntry[]): void {
 
 export function scaffold(projectName: string, type: ProjectType, bundler: BundlerType = 'vite'): void {
   const projectDir = path.resolve(process.cwd(), projectName);
+  const msg = t();
 
   if (fs.existsSync(projectDir)) {
     const entries = fs.readdirSync(projectDir);
     if (entries.length > 0) {
-      console.error(`\n✘ 目录 "${projectName}" 已存在且不为空。`);
+      console.error(msg.dirNotEmpty(projectName));
       process.exit(1);
     }
   }
@@ -83,21 +85,21 @@ export function scaffold(projectName: string, type: ProjectType, bundler: Bundle
 
   writeFiles(projectDir, files);
 
-  console.log(`\n✔ 项目已创建于 ./${projectName}\n`);
+  console.log(msg.projectCreated(projectName));
   if (useNasti) {
-    console.log(`  打包器: Nasti (Rolldown + OXC)`);
+    console.log(`  ${msg.bundlerLabel}`);
   }
-  console.log('下一步:');
+  console.log(msg.nextSteps);
   console.log(`  cd ${projectName}`);
   console.log('  npm install');
 
   switch (type) {
     case 'electron':
-      console.log('  npm run dev           # 启动 Web 开发服务器');
-      console.log('  npm run dev:electron  # 启动 Electron 应用');
+      console.log(`  npm run dev           ${msg.startWebDev}`);
+      console.log(`  npm run dev:electron  ${msg.startElectronApp}`);
       break;
     case 'tauri':
-      console.log('  npm run tauri:dev     # 启动 Tauri 开发模式');
+      console.log(`  npm run tauri:dev     ${msg.startTauriDev}`);
       break;
     default:
       console.log('  npm run dev');

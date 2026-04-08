@@ -1,4 +1,5 @@
 import { createInterface } from 'readline';
+import { t } from './i18n.js';
 
 export async function text(message: string, defaultValue?: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -17,23 +18,30 @@ export interface SelectOption {
   value: string;
 }
 
-export async function select(message: string, options: SelectOption[]): Promise<string> {
+export async function select(message: string, options: SelectOption[], defaultIndex?: number): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
   console.log(message);
   options.forEach((opt, i) => {
-    console.log(`  ${i + 1}) ${opt.label}`);
+    const marker = defaultIndex === i ? '*' : ' ';
+    console.log(`  ${marker}${i + 1}) ${opt.label}`);
   });
 
   return new Promise((resolve) => {
     const ask = () => {
       rl.question('> ', (answer) => {
-        const index = parseInt(answer.trim(), 10) - 1;
+        const trimmed = answer.trim();
+        if (trimmed === '' && defaultIndex !== undefined) {
+          rl.close();
+          resolve(options[defaultIndex].value);
+          return;
+        }
+        const index = parseInt(trimmed, 10) - 1;
         if (index >= 0 && index < options.length) {
           rl.close();
           resolve(options[index].value);
         } else {
-          console.log(`  请输入 1-${options.length} 之间的数字`);
+          console.log(t().enterNumber(options.length));
           ask();
         }
       });

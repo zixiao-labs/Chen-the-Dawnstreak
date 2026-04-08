@@ -148,10 +148,20 @@ dist-electron/
 
 export function viteEnvDts(): string {
   return `/// <reference types="vite/client" />
+
+declare module '*.css' {
+  const css: string;
+  export default css;
+}
 `;
 }
 
 export function nastiEnvDts(): string {
-  return `/// <reference types="nasti/client" />
+  return `/// <reference types="@nasti-toolchain/nasti/client" />
+
+declare module '*.css' {
+  const css: string;
+  export default css;
+}
 `;
 }
