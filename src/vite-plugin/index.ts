@@ -1,6 +1,50 @@
-import type { Plugin, HtmlTagDescriptor, ResolvedConfig, ViteDevServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
+
+// ─── Bundler-agnostic plugin types ────────────────────────────────────────────
+// Defined locally so this file does not `import from 'vite'`. Both Vite and
+// Nasti accept the same plugin shape structurally; importing from 'vite'
+// directly would break Nasti-only projects where vite is not installed.
+
+interface HtmlTagDescriptor {
+  tag: string;
+  attrs?: Record<string, string | boolean>;
+  children?: string | HtmlTagDescriptor[];
+  injectTo?: 'head' | 'body' | 'head-prepend' | 'body-prepend';
+}
+
+interface ResolvedConfig {
+  root: string;
+  command: 'build' | 'serve';
+  build: { outDir: string };
+}
+
+interface DevServer {
+  moduleGraph: {
+    getModuleById(id: string): any;
+    invalidateModule(mod: any): void;
+  };
+  watcher: {
+    add(paths: string | readonly string[]): any;
+    on(event: string, listener: (file: string) => void): any;
+  };
+  ws: { send(payload: any): void };
+}
+
+interface Plugin {
+  name: string;
+  enforce?: 'pre' | 'post';
+  apply?: 'build' | 'serve';
+  config?: (config: any, env: { mode: string; command: string; isSsrBuild?: boolean }) => any;
+  configResolved?: (config: ResolvedConfig) => void | Promise<void>;
+  resolveId?: (id: string, importer?: string, options?: { ssr?: boolean; isEntry?: boolean }) => any;
+  load?: (id: string) => any;
+  transform?: (code: string, id: string) => any;
+  transformIndexHtml?: (html?: any, ctx?: any) => any;
+  configureServer?: (server: DevServer) => any;
+  handleHotUpdate?: (ctx: { file: string; [key: string]: any }) => any;
+  closeBundle?: () => void | Promise<void>;
+}
 
 export interface ChenPWAOptions {
   /** App name for manifest */
@@ -215,7 +259,7 @@ export function ChenRoutes(){
 function chenRoutes(options?: ChenRoutesOptions): Plugin {
   let pagesDir: string;
   let viteRoot: string;
-  let server: ViteDevServer | undefined;
+  let server: DevServer | undefined;
 
   function invalidateRoutes() {
     if (!server) return;
