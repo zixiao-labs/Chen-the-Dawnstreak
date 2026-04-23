@@ -35,11 +35,12 @@ async function main(): Promise<void> {
     { label: msg.projectTypePwa, value: 'pwa' },
     { label: msg.projectTypeElectron, value: 'electron' },
     { label: msg.projectTypeTauri, value: 'tauri' },
+    { label: msg.projectTypeReactNative, value: 'react-native' },
   ]) as ProjectType;
 
-  // Select bundler (only for web/pwa — electron/tauri require Vite)
+  // Select bundler (web/pwa/electron — Tauri requires Vite, React Native doesn't use a bundler)
   let bundler: BundlerType = 'vite';
-  if (type === 'web' || type === 'pwa') {
+  if (type === 'web' || type === 'pwa' || type === 'electron') {
     bundler = await select(msg.selectBundler, [
       { label: msg.bundlerVite, value: 'vite' },
       { label: msg.bundlerNasti, value: 'nasti' },

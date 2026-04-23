@@ -1,7 +1,11 @@
-export type ProjectType = 'web' | 'pwa' | 'electron' | 'tauri';
+export type ProjectType = 'web' | 'pwa' | 'electron' | 'tauri' | 'react-native';
 export type BundlerType = 'vite' | 'nasti';
 
 export function packageJson(projectName: string, type: ProjectType, bundler: BundlerType = 'vite'): string {
+  if (type === 'react-native') {
+    return rnPackageJson(projectName);
+  }
+
   const base = {
     name: projectName,
     private: true,
@@ -17,8 +21,8 @@ export function packageJson(projectName: string, type: ProjectType, bundler: Bun
   base.dependencies['react-dom'] = '^19.0.0';
   base.dependencies['chen-the-dawnstreak'] = '^4.0.0';
 
-  // Bundler-specific devDeps and scripts (electron/tauri always use Vite)
-  const effectiveBundler: BundlerType = (type === 'electron' || type === 'tauri') ? 'vite' : bundler;
+  // Tauri always uses Vite; Electron can use either
+  const effectiveBundler: BundlerType = type === 'tauri' ? 'vite' : bundler;
 
   if (effectiveBundler === 'nasti') {
     base.devDependencies['@nasti-toolchain/nasti'] = '>=1.0.0';
@@ -43,13 +47,24 @@ export function packageJson(projectName: string, type: ProjectType, bundler: Bun
       break;
 
     case 'electron':
-      (base as Record<string, unknown>)['main'] = 'dist-electron/main.js';
-      base.devDependencies['electron'] = '^35.0.0';
+      (base as Record<string, unknown>)['main'] =
+        effectiveBundler === 'nasti' ? 'dist/main.cjs' : 'dist-electron/main.js';
+      base.devDependencies['electron'] = '^41.0.0';
       base.devDependencies['electron-builder'] = '^26.0.0';
-      base.devDependencies['esbuild'] = '^0.25.0';
-      base.scripts['build:electron-main'] = 'esbuild electron/main.ts electron/preload.ts --bundle --platform=node --outdir=dist-electron --format=esm --external:electron';
-      base.scripts['dev:electron'] = 'vite build && npm run build:electron-main && electron .';
-      base.scripts['build:electron'] = 'vite build && npm run build:electron-main && electron-builder';
+
+      if (effectiveBundler === 'nasti') {
+        // Nasti handles main/preload compilation — no esbuild needed
+        delete base.scripts['preview'];
+        base.scripts['dev'] = 'nasti electron';
+        base.scripts['build'] = 'nasti electron-build && electron-builder';
+      } else {
+        // Vite: compile main/preload separately with esbuild
+        base.devDependencies['esbuild'] = '^0.25.0';
+        base.scripts['build:electron-main'] =
+          'esbuild electron/main.ts electron/preload.ts --bundle --platform=node --outdir=dist-electron --format=esm --external:electron';
+        base.scripts['dev:electron'] = 'vite build && npm run build:electron-main && electron .';
+        base.scripts['build:electron'] = 'vite build && npm run build:electron-main && electron-builder';
+      }
       break;
 
     case 'tauri':
@@ -63,4 +78,35 @@ export function packageJson(projectName: string, type: ProjectType, bundler: Bun
   }
 
   return JSON.stringify(base, null, 2) + '\n';
+}
+
+function rnPackageJson(projectName: string): string {
+  const pkg = {
+    name: projectName,
+    version: '1.0.0',
+    main: 'node_modules/expo/AppEntry.js',
+    scripts: {
+      start: 'expo start',
+      android: 'expo start --android',
+      ios: 'expo start --ios',
+      web: 'expo start --web',
+    },
+    dependencies: {
+      'chen-the-dawnstreak': '^4.0.0',
+      'expo': '~53.0.0',
+      'expo-status-bar': '~2.0.0',
+      'react': '19.0.0',
+      'react-native': '0.79.0',
+      '@react-navigation/native': '^7.0.0',
+      '@react-navigation/native-stack': '^7.0.0',
+      'react-native-screens': '~4.0.0',
+      'react-native-safe-area-context': '~5.0.0',
+    },
+    devDependencies: {
+      '@babel/core': '^7.20.0',
+      'typescript': '^5.6.0',
+      '@types/react': '~19.0.0',
+    },
+  };
+  return JSON.stringify(pkg, null, 2) + '\n';
 }

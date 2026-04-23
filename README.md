@@ -20,10 +20,13 @@ npx chen my-app
 
 | 类型 | 说明 |
 |------|------|
-| Web | Vite + React |
+| Web | Vite 或 Nasti + React |
 | Web + PWA | 额外生成 manifest.json、Service Worker |
-| Desktop (Electron) | 额外生成 Electron 主进程/预加载脚本 |
-| Desktop (Tauri) | 额外生成 src-tauri/ Rust 项目 |
+| Desktop (Electron) | Vite 或 **Nasti** + Electron 主进程/预加载脚本 |
+| Desktop (Tauri) | Vite + src-tauri/ Rust 项目 |
+| Mobile (React Native / Expo) | Expo + React Navigation + Chen hooks |
+
+Web、PWA、Electron 项目可在 Vite（稳定）与 **Nasti**（Rolldown + OXC，更快）之间选择。
 
 CLI **不会自动安装依赖**，创建完成后按提示手动执行 `npm install`。
 
@@ -381,6 +384,102 @@ chen({
 
 After enabling PWA, `manifest.json` and `sw.js` are automatically generated during the build process, and the manifest link, theme-color meta, and Service Worker registration scripts are injected into the HTML.
 
+## React Native
+
+Chen 通过 `chen-the-dawnstreak/native` 入口提供 React Native 支持，封装了 React Navigation 并导出与 Web 端一致的数据 Hook。
+
+### 安装
+
+```bash
+npm install chen-the-dawnstreak @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context
+```
+
+### 导航
+
+`ChenNativeRouter` 是 React Navigation `NavigationContainer` 的别名，API 完全一致。
+
+```tsx
+import { ChenNativeRouter, createNativeStackNavigator } from 'chen-the-dawnstreak/native';
+
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return (
+    <ChenNativeRouter>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Detail" component={DetailScreen} />
+      </Stack.Navigator>
+    </ChenNativeRouter>
+  );
+}
+```
+
+也可以使用底部标签导航：
+
+```tsx
+import { ChenNativeRouter, createBottomTabNavigator } from 'chen-the-dawnstreak/native';
+
+const Tab = createBottomTabNavigator();
+```
+
+Re-exports: `ChenNativeRouter`, `createNativeStackNavigator`, `createBottomTabNavigator`, `useNavigation`, `useRoute`, `useFocusEffect`, `useIsFocused`.
+
+### 数据 Hook（与 Web 端完全一致）
+
+`useFetch`、`useMutation`、`createStore`、`createSimpleStore`、`useServerAction` 均可直接用于 React Native：
+
+```tsx
+import { useFetch } from 'chen-the-dawnstreak/native';
+
+function PostList() {
+  const { data, loading, error } = useFetch<Post[]>('https://api.example.com/posts');
+
+  if (loading) return <ActivityIndicator />;
+  if (error) return <Text>Error: {error.message}</Text>;
+
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item) => String(item.id)}
+      renderItem={({ item }) => <Text>{item.title}</Text>}
+    />
+  );
+}
+```
+
+### useNativeForm
+
+针对 React Native 的表单 Hook。与 `useForm` 逻辑完全相同，但 `registerNative()` 返回 `onChangeText` / `onBlur` / `value` 以直接绑定 `TextInput`：
+
+```tsx
+import { useNativeForm } from 'chen-the-dawnstreak/native';
+import { View, TextInput, Text, Button } from 'react-native';
+
+function LoginForm() {
+  const { registerNative, submit, errors, isSubmitting } = useNativeForm({
+    defaultValues: { email: '', password: '' },
+    validationRules: {
+      email: { required: 'Email is required', pattern: { value: /^\S+@\S+$/, message: 'Invalid email' } },
+      password: { required: true, minLength: { value: 8, message: 'Min 8 characters' } },
+    },
+    onSubmit: async (values) => {
+      await fetch('/api/login', { method: 'POST', body: JSON.stringify(values) });
+    },
+  });
+
+  return (
+    <View>
+      <TextInput placeholder="Email" {...registerNative('email')} />
+      {errors.email && <Text>{errors.email}</Text>}
+      <TextInput placeholder="Password" secureTextEntry {...registerNative('password')} />
+      {errors.password && <Text>{errors.password}</Text>}
+      <Button title="Login" onPress={submit} disabled={isSubmitting} />
+    </View>
+  );
+}
+```
+
 ## Roadmap
 
 - [x] Router (react-router v7 wrapper)
@@ -391,7 +490,9 @@ After enabling PWA, `manifest.json` and `sw.js` are automatically generated duri
 - [x] Server actions (RSC)
 - [x] SSR support (streaming + string)
 - [x] Build tooling (Vite plugin)
-- [x] CLI scaffolding tool (Web / PWA / Electron / Tauri)
+- [x] CLI scaffolding tool (Web / PWA / Electron / Tauri / React Native)
+- [x] React Native support (navigation, hooks, useNativeForm)
+- [x] Nasti Electron support
 
 ## License
 
