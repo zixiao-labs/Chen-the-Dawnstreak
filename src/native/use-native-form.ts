@@ -14,7 +14,7 @@ export interface UseNativeFormReturn<T extends object> {
   touched: Partial<Record<keyof T, boolean>>;
   isValid: boolean;
   isSubmitting: boolean;
-  registerNative: (name: keyof T, rules?: ValidationRule<T[keyof T]>) => {
+  registerNative: (name: keyof T) => {
     value: T[keyof T];
     onChangeText: (text: string) => void;
     onBlur: () => void;
@@ -23,8 +23,8 @@ export interface UseNativeFormReturn<T extends object> {
   setValue: (name: keyof T, value: T[keyof T]) => void;
   setValues: (values: Partial<T>) => void;
   reset: (values?: Partial<T>) => void;
-  validate: () => boolean;
-  validateField: (name: keyof T) => string | null;
+  validate: () => Promise<boolean>;
+  validateField: (name: keyof T, valuesOverride?: T) => Promise<string | null>;
 }
 
 type ValidationRulesWithStringKey<T extends object> = ValidationRules<T> & Record<string, ValidationRule<unknown>>;
@@ -39,8 +39,9 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateField = useCallback(
-    (name: keyof T): string | null => {
-      const value = values[name];
+    async (name: keyof T, valuesOverride?: T): Promise<string | null> => {
+      const currentValues = valuesOverride || values;
+      const value = currentValues[name];
       const rules = validationRules[name];
 
       if (!rules) return null;
@@ -82,9 +83,14 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
 
       if (rules.validate) {
         const result = rules.validate(value);
-        if (result instanceof Promise) return null;
-        if (typeof result === 'string') return result;
-        if (result === false) return '验证失败';
+        if (result instanceof Promise) {
+          const resolvedResult = await result;
+          if (typeof resolvedResult === 'string') return resolvedResult;
+          if (resolvedResult === false) return '验证失败';
+        } else {
+          if (typeof result === 'string') return result;
+          if (result === false) return '验证失败';
+        }
       }
 
       if (rules.custom) {
@@ -98,31 +104,36 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
     [values, validationRules]
   );
 
-  const validate = useCallback((): boolean => {
+  const validate = useCallback(async (): Promise<boolean> => {
     const newErrors: FieldErrors<T> = {};
     let valid = true;
-    (Object.keys(validationRules) as (keyof T)[]).forEach((name) => {
-      const error = validateField(name);
+    const fieldNames = Object.keys(validationRules) as (keyof T)[];
+    for (const name of fieldNames) {
+      const error = await validateField(name);
       if (error) { newErrors[name] = error; valid = false; }
-    });
+    }
     setErrors(newErrors);
     return valid;
   }, [validateField, validationRules]);
 
   const setValue = useCallback((name: keyof T, value: T[keyof T]) => {
-    setValuesState((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      const error = validateField(name);
-      setErrors((prev) => {
-        const next = { ...prev };
-        if (error) {
-          next[name] = error;
-        } else {
-          delete next[name];
-        }
-        return next;
-      });
-    }
+    setValuesState((prev) => {
+      const nextValues = { ...prev, [name]: value };
+      if (errors[name]) {
+        validateField(name, nextValues).then((error) => {
+          setErrors((prevErrors) => {
+            const next = { ...prevErrors };
+            if (error) {
+              next[name] = error;
+            } else {
+              delete next[name];
+            }
+            return next;
+          });
+        });
+      }
+      return nextValues;
+    });
   }, [errors, validateField]);
 
   const setValues = useCallback((newValues: Partial<T>) => {
@@ -138,15 +149,16 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
   const handleBlur = useCallback(
     (name: keyof T) => () => {
       setTouched((prev) => ({ ...prev, [name]: true }));
-      const error = validateField(name);
-      setErrors((prev) => {
-        const next = { ...prev };
-        if (error) {
-          next[name] = error;
-        } else {
-          delete next[name];
-        }
-        return next;
+      validateField(name).then((error) => {
+        setErrors((prev) => {
+          const next = { ...prev };
+          if (error) {
+            next[name] = error;
+          } else {
+            delete next[name];
+          }
+          return next;
+        });
       });
     },
     [validateField]
@@ -161,7 +173,7 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
 
         if (typeof currentValue === 'number') {
           const num = parseFloat(text);
-          convertedValue = (isNaN(num) ? 0 : num) as T[keyof T];
+          convertedValue = (isNaN(num) ? undefined : num) as T[keyof T];
         } else if (typeof currentValue === 'boolean') {
           convertedValue = (text === 'true' || text === '1') as T[keyof T];
         } else {
@@ -182,7 +194,7 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
         {} as Partial<Record<keyof T, boolean>>
       )
     );
-    const valid = validate();
+    const valid = await validate();
     if (!valid) return;
     setIsSubmitting(true);
     try {
