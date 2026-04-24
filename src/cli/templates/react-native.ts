@@ -44,7 +44,7 @@ export function rnHomeScreen(): string {
 import { useFetch } from 'chen-the-dawnstreak/native';
 
 export default function HomeScreen() {
-  const { data, loading, error } = useFetch<{ message: string }>('https://api.example.com/hello', {
+  useFetch<{ message: string }>('https://api.example.com/hello', {
     enabled: false,
   });
 

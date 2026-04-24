@@ -113,7 +113,15 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
     setValuesState((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       const error = validateField(name);
-      setErrors((prev) => ({ ...prev, [name]: error || undefined }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        if (error) {
+          next[name] = error;
+        } else {
+          delete next[name];
+        }
+        return next;
+      });
     }
   }, [errors, validateField]);
 
@@ -131,7 +139,15 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
     (name: keyof T) => () => {
       setTouched((prev) => ({ ...prev, [name]: true }));
       const error = validateField(name);
-      setErrors((prev) => ({ ...prev, [name]: error || undefined }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        if (error) {
+          next[name] = error;
+        } else {
+          delete next[name];
+        }
+        return next;
+      });
     },
     [validateField]
   );
@@ -139,7 +155,21 @@ export function useNativeForm<T extends object>(options: UseNativeFormOptions<T>
   const registerNative = useCallback(
     (name: keyof T) => ({
       value: values[name],
-      onChangeText: (text: string) => setValue(name, text as T[keyof T]),
+      onChangeText: (text: string) => {
+        const currentValue = values[name];
+        let convertedValue: T[keyof T];
+
+        if (typeof currentValue === 'number') {
+          const num = parseFloat(text);
+          convertedValue = (isNaN(num) ? 0 : num) as T[keyof T];
+        } else if (typeof currentValue === 'boolean') {
+          convertedValue = (text === 'true' || text === '1') as T[keyof T];
+        } else {
+          convertedValue = text as T[keyof T];
+        }
+
+        setValue(name, convertedValue);
+      },
       onBlur: handleBlur(name),
     }),
     [values, setValue, handleBlur]

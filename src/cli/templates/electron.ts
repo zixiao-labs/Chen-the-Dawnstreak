@@ -52,7 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 // Nasti Electron templates — main/preload live under src/electron/ and output CJS
 export function nastiElectronMain(): string {
-  return `import { app, BrowserWindow } from 'electron'
+  return `import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 
 async function createWindow() {
@@ -74,6 +74,8 @@ async function createWindow() {
     await win.loadFile(path.resolve(__dirname, 'renderer/index.html'))
   }
 }
+
+ipcMain.handle('ping', () => 'pong')
 
 app.whenReady().then(createWindow)
 
