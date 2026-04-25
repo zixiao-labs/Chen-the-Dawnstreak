@@ -119,19 +119,19 @@ export function createStore<T extends object>(
     }
     // 缓存最近一次的 selected 值，只要 equalityFn 相等就返回同一引用，
     // 防止 useSyncExternalStore 在 getSnapshot 返回非稳定引用时警告/死循环。
-    const lastRef = useRef<{ state: T; selected: R } | null>(null);
+    const lastRef = useRef<{ state: T; selected: R; selector: (state: T) => R } | null>(null);
     const getSelected = useCallback((): R => {
       const state = store.getState();
-      if (lastRef.current && lastRef.current.state === state) {
+      if (lastRef.current && lastRef.current.state === state && lastRef.current.selector === selector) {
         return lastRef.current.selected;
       }
       const next = selector(state);
       if (lastRef.current && equalityFn(lastRef.current.selected, next)) {
         // 值相等但 state 引用变了：更新 state 缓存，复用旧 selected
-        lastRef.current = { state, selected: lastRef.current.selected };
+        lastRef.current = { state, selected: lastRef.current.selected, selector };
         return lastRef.current.selected;
       }
-      lastRef.current = { state, selected: next };
+      lastRef.current = { state, selected: next, selector };
       return next;
     }, [store, selector, equalityFn]);
 
@@ -160,22 +160,22 @@ export function createSimpleStore<T extends object>(initialState: T) {
   ): T | R {
     // 闭包缓存，稳定 getSnapshot 引用
     // 必须在所有分支前调用 hooks，满足 Rules of Hooks
-    const lastRef = useRef<{ state: T; selected: R } | null>(null);
+    const lastRef = useRef<{ state: T; selected: R; selector: (state: T) => R } | null>(null);
     const getSelected = useCallback((): R => {
       const state = store.getState();
       if (!selector) {
         // selector 未传时，返回完整 state（需类型断言为 R）
         return state as unknown as R;
       }
-      if (lastRef.current && lastRef.current.state === state) {
+      if (lastRef.current && lastRef.current.state === state && lastRef.current.selector === selector) {
         return lastRef.current.selected;
       }
       const next = selector(state);
       if (lastRef.current && equalityFn(lastRef.current.selected, next)) {
-        lastRef.current = { state, selected: lastRef.current.selected };
+        lastRef.current = { state, selected: lastRef.current.selected, selector };
         return lastRef.current.selected;
       }
-      lastRef.current = { state, selected: next };
+      lastRef.current = { state, selected: next, selector };
       return next;
     }, [selector, equalityFn]);
 
@@ -221,22 +221,22 @@ export function useGlobalStore<T extends object, R>(
   equalityFn: (a: R, b: R) => boolean = Object.is,
 ): T | R {
   // 必须在所有分支前调用 hooks，满足 Rules of Hooks
-  const lastRef = useRef<{ state: T; selected: R } | null>(null);
+  const lastRef = useRef<{ state: T; selected: R; selector: (state: T) => R } | null>(null);
   const getSelected = useCallback((): R => {
     const state = store.getState();
     if (!selector) {
       // selector 未传时，返回完整 state（需类型断言为 R）
       return state as unknown as R;
     }
-    if (lastRef.current && lastRef.current.state === state) {
+    if (lastRef.current && lastRef.current.state === state && lastRef.current.selector === selector) {
       return lastRef.current.selected;
     }
     const next = selector(state);
     if (lastRef.current && equalityFn(lastRef.current.selected, next)) {
-      lastRef.current = { state, selected: lastRef.current.selected };
+      lastRef.current = { state, selected: lastRef.current.selected, selector };
       return lastRef.current.selected;
     }
-    lastRef.current = { state, selected: next };
+    lastRef.current = { state, selected: next, selector };
     return next;
   }, [store, selector, equalityFn]);
 
