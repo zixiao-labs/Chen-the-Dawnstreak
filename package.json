@@ -1,6 +1,6 @@
 {
   "name": "chen-the-dawnstreak",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "赤刃明霄陈-轻量级React元框架：文件路由·数据钩子·SSR·PWA·多平台CLI脚手架",
   "keywords": [
     "react",
