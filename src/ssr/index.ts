@@ -88,13 +88,29 @@ export function renderToStream(
   // 用 pipe({ end: false }) 保留 writable 的 backpressure 语义；end 由我们手动触发
   bridge.pipe(writable, { end: false });
   bridge.on('end', () => {
-    writable.write(shell.afterContent);
-    writable.end();
-    options.onAllReady?.();
+    // 检查 writable 是否已被销毁或结束
+    if (writable.destroyed || writable.writableEnded) {
+      return;
+    }
+    try {
+      writable.write(shell.afterContent);
+      writable.end();
+      options.onAllReady?.();
+    } catch (err) {
+      options.onError?.(err);
+      writable.destroy(err instanceof Error ? err : new Error(String(err)));
+    }
   });
   bridge.on('error', (err: Error) => {
     options.onError?.(err);
     writable.destroy(err);
+  });
+  // 双向错误传播：writable 独立错误需要清理 bridge
+  writable.on('error', (err: Error) => {
+    options.onError?.(err);
+    if (bridge.destroy) {
+      bridge.destroy(err);
+    }
   });
 
   const { pipe, abort } = renderToPipeableStream(element, {

@@ -158,13 +158,15 @@ export function createSimpleStore<T extends object>(initialState: T) {
     selector?: (state: T) => R,
     equalityFn: (a: R, b: R) => boolean = Object.is,
   ): T | R {
-    if (!selector) {
-      return useSyncExternalStore(store.subscribe, store.getState, store.getState);
-    }
     // 闭包缓存，稳定 getSnapshot 引用
+    // 必须在所有分支前调用 hooks，满足 Rules of Hooks
     const lastRef = useRef<{ state: T; selected: R } | null>(null);
     const getSelected = useCallback((): R => {
       const state = store.getState();
+      if (!selector) {
+        // selector 未传时，返回完整 state（需类型断言为 R）
+        return state as unknown as R;
+      }
       if (lastRef.current && lastRef.current.state === state) {
         return lastRef.current.selected;
       }
@@ -176,6 +178,10 @@ export function createSimpleStore<T extends object>(initialState: T) {
       lastRef.current = { state, selected: next };
       return next;
     }, [selector, equalityFn]);
+
+    if (!selector) {
+      return useSyncExternalStore(store.subscribe, store.getState, store.getState);
+    }
     return useSyncExternalStore(store.subscribe, getSelected, getSelected);
   }
 
@@ -214,12 +220,14 @@ export function useGlobalStore<T extends object, R>(
   selector?: (state: T) => R,
   equalityFn: (a: R, b: R) => boolean = Object.is,
 ): T | R {
-  if (!selector) {
-    return useSyncExternalStore(store.subscribe, store.getState, store.getState);
-  }
+  // 必须在所有分支前调用 hooks，满足 Rules of Hooks
   const lastRef = useRef<{ state: T; selected: R } | null>(null);
   const getSelected = useCallback((): R => {
     const state = store.getState();
+    if (!selector) {
+      // selector 未传时，返回完整 state（需类型断言为 R）
+      return state as unknown as R;
+    }
     if (lastRef.current && lastRef.current.state === state) {
       return lastRef.current.selected;
     }
@@ -231,6 +239,10 @@ export function useGlobalStore<T extends object, R>(
     lastRef.current = { state, selected: next };
     return next;
   }, [store, selector, equalityFn]);
+
+  if (!selector) {
+    return useSyncExternalStore(store.subscribe, store.getState, store.getState);
+  }
   return useSyncExternalStore(store.subscribe, getSelected, getSelected);
 }
 
