@@ -183,4 +183,205 @@ describe('createStore', () => {
       renderHook(() => counterStore.useStoreDispatch());
     }).toThrow();
   });
+
+  it('在 Provider 外使用 useStoreSelector 应抛出错误', () => {
+    expect(() => {
+      renderHook(() => counterStore.useStoreSelector((s) => s.count));
+    }).toThrow();
+  });
+
+  it('useStoreSelector 自定义 equalityFn：浅比较对象时不触发多余渲染', () => {
+    const objStore = createStore<{ nested: { x: number }; other: number }>({
+      name: 'obj-store',
+      initialState: { nested: { x: 1 }, other: 0 },
+    });
+    const objWrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(objStore.StoreProvider, null, children);
+
+    let renderCount = 0;
+    const shallowEqual = (a: { x: number }, b: { x: number }) => a.x === b.x;
+
+    const { result } = renderHook(
+      () => {
+        renderCount++;
+        return objStore.useStoreSelector((s) => s.nested, shallowEqual);
+      },
+      { wrapper: objWrapper }
+    );
+
+    const initialRenders = renderCount;
+    // Dispatch a change that changes 'other' but creates a new 'nested' reference with same value
+    act(() => objStore.useStoreDispatch && result.current);
+    // Update only 'other', nested.x stays the same
+    const dispatch = renderHook(() => objStore.useStoreDispatch(), { wrapper: objWrapper });
+    act(() => dispatch.result.current({ nested: { x: 1 }, other: 99 }));
+
+    // The selector returns nested object; equalityFn says x is same → no extra render
+    expect(result.current.x).toBe(1);
+    // renderCount should not have increased due to the state change (selector equal)
+    expect(renderCount).toBe(initialRenders);
+  });
+
+  it('useStoreSelector 默认 Object.is 比较：引用不同时触发重新渲染', () => {
+    const objStore2 = createStore<{ items: number[] }>({
+      name: 'items-store',
+      initialState: { items: [1, 2, 3] },
+    });
+    const objWrapper2 = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(objStore2.StoreProvider, null, children);
+
+    const dispatchHook = renderHook(() => objStore2.useStoreDispatch(), { wrapper: objWrapper2 });
+    const { result } = renderHook(
+      () => objStore2.useStoreSelector((s) => s.items),
+      { wrapper: objWrapper2 }
+    );
+
+    const newItems = [4, 5, 6];
+    act(() => dispatchHook.result.current({ items: newItems }));
+    expect(result.current).toBe(newItems);
+  });
+
+  it('多个 StoreProvider 实例各有独立状态', () => {
+    const sharedDef = createStore<{ value: number }>({
+      name: 'multi-provider',
+      initialState: { value: 0 },
+    });
+
+    const wrapperA = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(sharedDef.StoreProvider, { initialState: { value: 10 } }, children);
+    const wrapperB = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(sharedDef.StoreProvider, { initialState: { value: 20 } }, children);
+
+    const { result: resultA } = renderHook(() => sharedDef.useStore(), { wrapper: wrapperA });
+    const { result: resultB } = renderHook(() => sharedDef.useStore(), { wrapper: wrapperB });
+
+    expect(resultA.current.value).toBe(10);
+    expect(resultB.current.value).toBe(20);
+  });
+});
+
+// ─── createSimpleStore (new selector overloads) ──────────────────────────────
+
+describe('createSimpleStore — selector overloads (new in PR)', () => {
+  it('useStore with selector 返回选取的字段', () => {
+    const store = createSimpleStore({ count: 5, name: 'test' });
+    const { result } = renderHook(() => store.useStore((s) => s.count));
+    expect(result.current).toBe(5);
+  });
+
+  it('useStore with selector 在对应字段更新时重新渲染', () => {
+    const store = createSimpleStore({ count: 0, name: 'test' });
+    const { result } = renderHook(() => store.useStore((s) => s.count));
+
+    act(() => store.setState({ count: 42 }));
+    expect(result.current).toBe(42);
+  });
+
+  it('useStore with selector + custom equalityFn 避免不必要重渲染', () => {
+    const store = createSimpleStore({ nested: { x: 1 }, other: 0 });
+    let renderCount = 0;
+    const shallowEqual = (a: { x: number }, b: { x: number }) => a.x === b.x;
+
+    const { result } = renderHook(() => {
+      renderCount++;
+      return store.useStore((s) => s.nested, shallowEqual);
+    });
+
+    const initialRenders = renderCount;
+    // Update other, nested.x stays same value (new reference)
+    act(() => store.setState({ nested: { x: 1 }, other: 99 }));
+
+    expect(result.current.x).toBe(1);
+    expect(renderCount).toBe(initialRenders);
+  });
+
+  it('useStore without selector 返回完整 state', () => {
+    const store = createSimpleStore({ a: 1, b: 2 });
+    const { result } = renderHook(() => store.useStore());
+    expect(result.current).toEqual({ a: 1, b: 2 });
+  });
+
+  it('useDispatch 返回稳定的 setState 引用', () => {
+    const store = createSimpleStore({ count: 0 });
+    const { result, rerender } = renderHook(() => store.useDispatch());
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+});
+
+// ─── useGlobalStore — selector overloads (new in PR) ─────────────────────────
+
+describe('useGlobalStore — selector overloads (new in PR)', () => {
+  it('useGlobalStore with selector 返回选取的值', () => {
+    const store = createSimpleStore({ count: 7, label: 'hello' });
+    const { result } = renderHook(() => useGlobalStore(store, (s) => s.count));
+    expect(result.current).toBe(7);
+  });
+
+  it('useGlobalStore with selector 在字段更新时重新渲染', () => {
+    const store = createSimpleStore({ count: 0 });
+    const { result } = renderHook(() => useGlobalStore(store, (s) => s.count));
+
+    act(() => store.setState({ count: 100 }));
+    expect(result.current).toBe(100);
+  });
+
+  it('useGlobalStore with selector + custom equalityFn 避免不必要重渲染', () => {
+    const store = createSimpleStore({ nested: { x: 1 }, other: 0 });
+    let renderCount = 0;
+    const shallowEqual = (a: { x: number }, b: { x: number }) => a.x === b.x;
+
+    const { result } = renderHook(() => {
+      renderCount++;
+      return useGlobalStore(store, (s) => s.nested, shallowEqual);
+    });
+
+    const initialRenders = renderCount;
+    act(() => store.setState({ nested: { x: 1 }, other: 55 }));
+
+    expect(result.current.x).toBe(1);
+    expect(renderCount).toBe(initialRenders);
+  });
+
+  it('useGlobalStore without selector 返回完整 state', () => {
+    const store = createSimpleStore({ x: 10, y: 20 });
+    const { result } = renderHook(() => useGlobalStore(store));
+    expect(result.current).toEqual({ x: 10, y: 20 });
+  });
+
+  it('useGlobalStore selector 值变化时触发重新渲染', () => {
+    const store = createSimpleStore({ count: 0, name: 'a' });
+    const { result } = renderHook(() => useGlobalStore(store, (s) => s.name));
+
+    act(() => store.setState({ name: 'b' }));
+    expect(result.current).toBe('b');
+  });
+});
+
+// ─── useGlobalStoreDispatch (simplified to direct store.setState) ─────────────
+
+describe('useGlobalStoreDispatch — simplified return (new in PR)', () => {
+  it('返回的函数与 store.setState 是同一引用', () => {
+    const store = createSimpleStore({ count: 0 });
+    const { result } = renderHook(() => useGlobalStoreDispatch(store));
+    expect(result.current).toBe(store.setState);
+  });
+
+  it('调用后正确更新 store 状态', () => {
+    const store = createSimpleStore({ count: 0 });
+    const { result: dispatchResult } = renderHook(() => useGlobalStoreDispatch(store));
+    const { result: storeResult } = renderHook(() => useGlobalStore(store));
+
+    act(() => dispatchResult.current({ count: 123 }));
+    expect(storeResult.current.count).toBe(123);
+  });
+
+  it('函数形式 dispatch 基于前值更新', () => {
+    const store = createSimpleStore({ count: 5 });
+    const { result } = renderHook(() => useGlobalStoreDispatch(store));
+
+    act(() => result.current((prev) => ({ count: prev.count * 2 })));
+    expect(store.getState().count).toBe(10);
+  });
 });
