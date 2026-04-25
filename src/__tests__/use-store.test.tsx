@@ -204,21 +204,20 @@ describe('createStore', () => {
     const { result } = renderHook(
       () => {
         renderCount++;
-        return objStore.useStoreSelector((s) => s.nested, shallowEqual);
+        return {
+          nested: objStore.useStoreSelector((s) => s.nested, shallowEqual),
+          dispatch: objStore.useStoreDispatch(),
+        };
       },
       { wrapper: objWrapper }
     );
 
     const initialRenders = renderCount;
-    // Dispatch a change that changes 'other' but creates a new 'nested' reference with same value
-    act(() => objStore.useStoreDispatch && result.current);
-    // Update only 'other', nested.x stays the same
-    const dispatch = renderHook(() => objStore.useStoreDispatch(), { wrapper: objWrapper });
-    act(() => dispatch.result.current({ nested: { x: 1 }, other: 99 }));
+    // Update only 'other'，nested.x 保持不变；新建一个 nested 引用以验证 equalityFn 生效
+    act(() => result.current.dispatch({ nested: { x: 1 }, other: 99 }));
 
-    // The selector returns nested object; equalityFn says x is same → no extra render
-    expect(result.current.x).toBe(1);
-    // renderCount should not have increased due to the state change (selector equal)
+    // selector 返回 nested 对象；equalityFn 认为 x 相同 → 不应触发额外渲染
+    expect(result.current.nested.x).toBe(1);
     expect(renderCount).toBe(initialRenders);
   });
 
@@ -230,15 +229,17 @@ describe('createStore', () => {
     const objWrapper2 = ({ children }: { children: React.ReactNode }) =>
       React.createElement(objStore2.StoreProvider, null, children);
 
-    const dispatchHook = renderHook(() => objStore2.useStoreDispatch(), { wrapper: objWrapper2 });
     const { result } = renderHook(
-      () => objStore2.useStoreSelector((s) => s.items),
+      () => ({
+        items: objStore2.useStoreSelector((s) => s.items),
+        dispatch: objStore2.useStoreDispatch(),
+      }),
       { wrapper: objWrapper2 }
     );
 
     const newItems = [4, 5, 6];
-    act(() => dispatchHook.result.current({ items: newItems }));
-    expect(result.current).toBe(newItems);
+    act(() => result.current.dispatch({ items: newItems }));
+    expect(result.current.items).toBe(newItems);
   });
 
   it('多个 StoreProvider 实例各有独立状态', () => {
@@ -248,9 +249,9 @@ describe('createStore', () => {
     });
 
     const wrapperA = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(sharedDef.StoreProvider, { initialState: { value: 10 } }, children);
+      React.createElement(sharedDef.StoreProvider, { initialState: { value: 10 }, children });
     const wrapperB = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(sharedDef.StoreProvider, { initialState: { value: 20 } }, children);
+      React.createElement(sharedDef.StoreProvider, { initialState: { value: 20 }, children });
 
     const { result: resultA } = renderHook(() => sharedDef.useStore(), { wrapper: wrapperA });
     const { result: resultB } = renderHook(() => sharedDef.useStore(), { wrapper: wrapperB });
