@@ -6,8 +6,9 @@ import { packageJson } from './templates/package-json.js';
 import { viteConfig } from './templates/vite-config.js';
 import { nastiConfig } from './templates/nasti-config.js';
 import { manifest } from './templates/pwa.js';
-import { electronMain, electronPreload } from './templates/electron.js';
+import { electronMain, electronPreload, nastiElectronMain, nastiElectronPreload } from './templates/electron.js';
 import { cargoToml, tauriConf, tauriMainRs, tauriBuildRs } from './templates/tauri.js';
+import { rnAppJson, rnAppTsx, rnHomeScreen, rnTsconfigJson, rnBabelConfig, rnGitignore } from './templates/react-native.js';
 import { t } from './i18n.js';
 
 interface FileEntry {
@@ -38,11 +39,32 @@ export function scaffold(projectName: string, type: ProjectType, bundler: Bundle
 
   fs.mkdirSync(projectDir, { recursive: true });
 
-  // Electron and Tauri always use Vite
-  const effectiveBundler: BundlerType = (type === 'electron' || type === 'tauri') ? 'vite' : bundler;
+  // Tauri always uses Vite; Electron can use either
+  const effectiveBundler: BundlerType = type === 'tauri' ? 'vite' : bundler;
   const useNasti = effectiveBundler === 'nasti';
 
-  // Base files for all project types
+  // React Native has a completely different file set
+  if (type === 'react-native') {
+    const files: FileEntry[] = [
+      { filePath: 'App.tsx', content: rnAppTsx() },
+      { filePath: 'app.json', content: rnAppJson(projectName) },
+      { filePath: 'src/screens/HomeScreen.tsx', content: rnHomeScreen() },
+      { filePath: 'tsconfig.json', content: rnTsconfigJson() },
+      { filePath: 'babel.config.js', content: rnBabelConfig() },
+      { filePath: '.gitignore', content: rnGitignore() },
+      { filePath: 'package.json', content: packageJson(projectName, type) },
+    ];
+    writeFiles(projectDir, files);
+    console.log(msg.projectCreated(projectName));
+    console.log(msg.nextSteps);
+    console.log(`  cd ${projectName}`);
+    console.log('  npm install');
+    console.log('  npm start');
+    console.log('');
+    return;
+  }
+
+  // Base files for all web/desktop project types
   const files: FileEntry[] = [
     { filePath: 'index.html', content: indexHtml(projectName) },
     { filePath: 'src/main.tsx', content: mainTsx() },
@@ -66,10 +88,18 @@ export function scaffold(projectName: string, type: ProjectType, bundler: Bundle
 
   // Electron-specific files
   if (type === 'electron') {
-    files.push(
-      { filePath: 'electron/main.ts', content: electronMain() },
-      { filePath: 'electron/preload.ts', content: electronPreload() },
-    );
+    if (useNasti) {
+      // Nasti expects main/preload under src/electron/
+      files.push(
+        { filePath: 'src/electron/main.ts', content: nastiElectronMain() },
+        { filePath: 'src/electron/preload.ts', content: nastiElectronPreload() },
+      );
+    } else {
+      files.push(
+        { filePath: 'electron/main.ts', content: electronMain() },
+        { filePath: 'electron/preload.ts', content: electronPreload() },
+      );
+    }
   }
 
   // Tauri-specific files
@@ -95,8 +125,12 @@ export function scaffold(projectName: string, type: ProjectType, bundler: Bundle
 
   switch (type) {
     case 'electron':
-      console.log(`  npm run dev           ${msg.startWebDev}`);
-      console.log(`  npm run dev:electron  ${msg.startElectronApp}`);
+      if (useNasti) {
+        console.log(`  npm run dev           ${msg.startElectronApp}`);
+      } else {
+        console.log(`  npm run dev           ${msg.startWebDev}`);
+        console.log(`  npm run dev:electron  ${msg.startElectronApp}`);
+      }
       break;
     case 'tauri':
       console.log(`  npm run tauri:dev     ${msg.startTauriDev}`);

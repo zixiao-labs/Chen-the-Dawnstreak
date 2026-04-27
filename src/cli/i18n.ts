@@ -10,6 +10,7 @@ export interface Messages {
   projectTypePwa: string;
   projectTypeElectron: string;
   projectTypeTauri: string;
+  projectTypeReactNative: string;
   selectBundler: string;
   bundlerVite: string;
   bundlerNasti: string;
@@ -36,6 +37,7 @@ const zhCN: Messages = {
   projectTypePwa: 'Web + PWA',
   projectTypeElectron: 'Desktop (Electron)',
   projectTypeTauri: 'Desktop (Tauri)',
+  projectTypeReactNative: 'Mobile (React Native / Expo)',
   selectBundler: '选择打包器:',
   bundlerVite: 'Vite (稳定)',
   bundlerNasti: 'Nasti (更快，基于 Rolldown + OXC)',
@@ -62,6 +64,7 @@ const en: Messages = {
   projectTypePwa: 'Web + PWA',
   projectTypeElectron: 'Desktop (Electron)',
   projectTypeTauri: 'Desktop (Tauri)',
+  projectTypeReactNative: 'Mobile (React Native / Expo)',
   selectBundler: 'Select bundler:',
   bundlerVite: 'Vite (stable)',
   bundlerNasti: 'Nasti (faster, Rolldown + OXC based)',
